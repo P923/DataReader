@@ -1,0 +1,16 @@
+﻿[Unit]
+Description=QuestDB
+Documentation=https://www.questdb.io/docs/introduction
+After=network.target
+
+[Service]
+Type=forking
+Restart=always
+RestartSec=2
+ExecStart=/home/srv/questdb-6.4.3-rt-linux-amd64/bin/questdb.sh start
+ExecStop=/home/srv/questdb-6.4.3-rt-linux-amd64bin/questdb.sh stop
+# Prevent writes to /usr, /boot, and /etc
+
+
+[Install]
+WantedBy=multi-user.target

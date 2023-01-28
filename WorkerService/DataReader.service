@@ -1,0 +1,17 @@
+[Unit]
+Description=Servizio scrittura QuestDB
+
+[Service]
+WorkingDirectory=/home/srv/Service/
+ExecStart=/usr/bin/dotnet  /home/srv/Service/WorkerService.dll
+Restart=always
+# Restart service after 10 seconds if the dotnet service crashes:
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=log.matteo
+User=srv
+Environment=ASPNETCORE_ENVIRONMENT=Production
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target

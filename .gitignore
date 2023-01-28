@@ -1,0 +1,9 @@
+﻿################################################################################
+# Il file gitignore è stato creato automaticamente da Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/
+/DataReader/obj
+/WorkerService/obj
+/DataReader/bin/
+/WorkerService/bin/

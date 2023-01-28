@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GUI", "DataReader\GUI.csproj", "{CA614C24-052B-47A5-A451-8AC85A0EA5A6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkerService", "WorkerService\WorkerService.csproj", "{E60B6500-3487-48DC-B6A9-F3C46F79BF76}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CA614C24-052B-47A5-A451-8AC85A0EA5A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA614C24-052B-47A5-A451-8AC85A0EA5A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA614C24-052B-47A5-A451-8AC85A0EA5A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA614C24-052B-47A5-A451-8AC85A0EA5A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E60B6500-3487-48DC-B6A9-F3C46F79BF76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E60B6500-3487-48DC-B6A9-F3C46F79BF76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E60B6500-3487-48DC-B6A9-F3C46F79BF76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E60B6500-3487-48DC-B6A9-F3C46F79BF76}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C24BD499-685B-4ACA-A39C-84FB1E80753A}
+	EndGlobalSection
+EndGlobal
