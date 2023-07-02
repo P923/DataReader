@@ -7,7 +7,7 @@
 
 
 A simple GUI for reading data from OPC Server, ModBus, AB Contrologix 5000 or XML, directly from the terminal.  <br /> 
-There is also a Worker Service that writes the required data (initialized by the GUI) to a local QuestDB. <br />
+There is also a Worker Service that writes the required data (initialized by the GUI) to a local QuestDB. <br /> <br /> <br />
 ![Image](./DataReader/image.PNG)
 
 # OPC UA
@@ -20,6 +20,7 @@ For address of the tag, you need to insert the full path, for example <br />
 ```
 ns=2;s=Channel1.Device1.Tag1
 ```
+For the moment like for the other components, it is used a direct Read and not a Subscribtion.
 
 
 
