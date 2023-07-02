@@ -131,6 +131,12 @@ namespace GUI.Views
                 lblError.Text = "Insert a correct type of Data Origin.";
             }
 
+            if (comboTXT.Equals(Constants.OPCServer))
+            {
+                lblError.Text += "\n" +
+                    "You can insert Username:Password in Path.";
+            }
+
             if (enabled)
             {
                 lblError.Text = "";

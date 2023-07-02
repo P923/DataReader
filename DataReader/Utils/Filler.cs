@@ -11,7 +11,8 @@ namespace GUI.Utils
             {
                 Constants.AB,
                 Constants.MODBUS,
-                Constants.XML
+                Constants.XML,
+                Constants.OPCServer
             };
             return list;
         }

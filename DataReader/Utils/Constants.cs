@@ -31,5 +31,6 @@
         public const string AB = "AllenBradley - Port 44818";
         public const string MODBUS = "ModBus       - Port 502";
         public const string XML = "HTTP/XML     - Port 80";
+        public const string OPCServer = "OPCServer     - Port 80";
     }
 }

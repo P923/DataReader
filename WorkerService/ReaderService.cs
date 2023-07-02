@@ -13,16 +13,18 @@ namespace WorkerService
         private readonly OriginRequest _originRequest;
         private readonly QuestDBClient _DB;
         private CancellationToken _stoppingToken;
+        private SessionTracker _sessions;
 
         private Task _t;
         private long _startTime;
         private long _endTime;
 
-        public ReaderService(DataTag Tag, ILogger<Worker> Logger, QuestDBClient Client)
+        public ReaderService(DataTag Tag, ILogger<Worker> Logger, QuestDBClient Client, SessionTracker session)
         {
             this.Tag = Tag;
+            _sessions = session;
             _logger = Logger;
-            _originRequest = new OriginRequest();
+            _originRequest = new OriginRequest(_sessions);
             _DB = Client;
         }
 

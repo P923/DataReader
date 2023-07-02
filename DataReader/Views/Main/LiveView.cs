@@ -6,7 +6,8 @@ namespace GUI.Views.Main
 {
     internal class LiveView : EventSubscriber
     {
-        private readonly OriginRequest reader;
+        public static SessionTracker sessions;
+        private OriginRequest reader;
         public Window view;
         public Label label;
         public Label value;
@@ -14,7 +15,8 @@ namespace GUI.Views.Main
 
         public LiveView()
         {
-            reader = new OriginRequest();
+            sessions = new SessionTracker();
+            reader = new OriginRequest(sessions);
         }
 
         public Window Render(Window plcWin, Window tagWin)

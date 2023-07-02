@@ -3,6 +3,7 @@ using GUI.Data;
 using IoTClient.Clients.Modbus;
 using libplctag;
 using libplctag.DataTypes;
+using Opc.Ua;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -14,9 +15,29 @@ namespace GUI.Utils
         private DataTag tag;
         public string ReturnValue;
         private CancellationTokenSource _token;
+        private SessionTracker OPCSessions;
+        private OPCUAHelper session;
 
-        public OriginRequest() : base()
+        public OriginRequest(SessionTracker OPCSessions) : base()
         {
+            this.OPCSessions = OPCSessions;
+        }
+
+        private void InitOpcSession()
+        {
+            if (tag.DataOrigin.Type == Constants.OPCServer)
+            {
+                string Username = null;
+                string Password = null;
+                if (tag.DataOrigin.Path.Length> 0)
+                {
+                 
+                    string[] parts = tag.DataOrigin.Path.Split(':');
+                    Username = parts[0];
+                    Password = parts[1]; 
+                }
+                session = OPCSessions.AddOrCreateSession(tag.DataOrigin.Ip, Username, Password);
+            }
         }
 
 
@@ -24,6 +45,8 @@ namespace GUI.Utils
         {
 
             this.tag = tag;
+            InitOpcSession();
+
             if (_token != null)
             {
                 _token.Cancel();
@@ -33,9 +56,13 @@ namespace GUI.Utils
             _backgroundWorker.Start();
         }
 
+
+
         public string ReadOriginTagSync(DataTag tag)
         {
             this.tag = tag;
+            InitOpcSession();
+
             ReadOriginTag();
             return ReturnValue;
         }
@@ -170,6 +197,13 @@ namespace GUI.Utils
 
                         break;
 
+                    case Constants.OPCServer:
+
+
+                        DataValueCollection result = session.Read(OPCUAHelper.ToNode(tag.Address), Attributes.Value);
+                        ReturnValue = result[0].Value.ToString();
+                        break;
+
                     default:
                         switch (tag.Type)
                         {
@@ -265,6 +299,8 @@ namespace GUI.Utils
                                 break;
 
                         }
+
+
 
                         break;
                 }

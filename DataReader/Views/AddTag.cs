@@ -1,5 +1,6 @@
 ﻿using GUI.Data;
 using GUI.Utils;
+using GUI.Views.Main;
 using NStack;
 using System.Text.RegularExpressions;
 using Terminal.Gui;
@@ -141,7 +142,7 @@ namespace GUI.Views
             dialog.Add(lblError);
             dialog.Add(lblPreview);
 
-            originRequest = new OriginRequest();
+            originRequest = new OriginRequest(LiveView.sessions);
             originRequest.AddSubscriber(this);
 
             if (tag != null)

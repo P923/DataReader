@@ -1,4 +1,5 @@
 using GUI.Data;
+using GUI.Utils;
 using Questdb.Net;
 
 namespace WorkerService
@@ -9,6 +10,7 @@ namespace WorkerService
         private readonly int WAIT_SLEEP_MAIN = 5000;
         private readonly List<DataTag> _Tags;
         private readonly QuestDBClient _QuestDBClient;
+        private readonly SessionTracker _sessions;
 
         //private InfluxDBClient TSDbClient;
 
@@ -25,7 +27,7 @@ namespace WorkerService
             List<ReaderService> readers = new();
             foreach (DataTag tag in _Tags)
             {
-                readers.Add(new ReaderService(tag, _Logger, _QuestDBClient));
+                readers.Add(new ReaderService(tag, _Logger, _QuestDBClient, _sessions));
             }
 
             foreach (ReaderService backgroundService in readers)
@@ -39,6 +41,7 @@ namespace WorkerService
                 close = StoppingToken.IsCancellationRequested;
             }
 
+            _sessions.CloseAllSessions();
 
         }
     }
