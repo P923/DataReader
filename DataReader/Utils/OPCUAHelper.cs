@@ -14,7 +14,10 @@ namespace GUI.Utils
 
         public OPCUAHelper AddOrCreateSession(string UriToScan, string Username = null, string Password = null)
         {
-            OPCUAHelper opc = new OPCUAHelper("DataReader", "Reader", @"C:\Users\Matteo\Documents\TestOPC\OPC.xml");
+            string currentDirectory = Environment.CurrentDirectory;
+            string absolutePath = Path.Combine(currentDirectory, "Utils/OPConfig.xml");
+
+            OPCUAHelper opc = new OPCUAHelper("DataReader", "Reader", absolutePath);
             opc.UriToScan = UriToScan;
 
             if (sessions.Contains(opc))
