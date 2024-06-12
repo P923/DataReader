@@ -12,25 +12,52 @@ namespace GUI.Utils
     {
         private List<OPCUAHelper> sessions = new List<OPCUAHelper>();
 
-        public OPCUAHelper AddOrCreateSession(string UriToScan, string Username = null, string Password = null)
+        public OPCUAHelper AddOrCreateSession(string UriToScan, bool forceRefresh = false, string Username = null, string Password = null)
         {
-            string currentDirectory = Environment.CurrentDirectory;
-            string absolutePath = Path.Combine(currentDirectory, "Utils/OPConfig.xml");
-
-            OPCUAHelper opc = new OPCUAHelper("DataReader", "Reader", absolutePath);
-            opc.UriToScan = UriToScan;
-
-            if (sessions.Contains(opc))
+            try
             {
-                return sessions.ElementAt(sessions.IndexOf(opc));
+                System.IO.Directory.SetCurrentDirectory(System.AppDomain.CurrentDomain.BaseDirectory);
+                string currentDirectory = Environment.CurrentDirectory;
+                string absolutePath = Path.Combine(currentDirectory, "Data/Utils/OPConfig.xml");
+
+                OPCUAHelper opc = new OPCUAHelper("DataReader", "Reader", absolutePath);
+                opc.UriToScan = UriToScan;
+
+                if (forceRefresh && sessions.Count > 0)
+                {
+                    int pos = sessions.IndexOf(opc);
+                    if (pos != -1)
+                    {
+                        try { sessions[pos].CloseSession(); } catch { }
+                        sessions.RemoveAt(pos);
+                    }
+                }
+
+                if (sessions.Contains(opc))
+                {
+                    return sessions.ElementAt(sessions.IndexOf(opc));
+                }
+                else
+                {
+                    opc.Connect(UriToScan, "Sessione1", Username, Password);
+                    sessions.Add(opc);
+                    return opc;
+                }
             }
-            else
+            catch (Exception e)
             {
-                opc.Connect(UriToScan, "Sessione1", Username, Password);
-                sessions.Add(opc);
-                return opc;
+                return null;
             }
 
+        }
+
+        public void RemoveFromSession(OPCUAHelper opc)
+        {
+            if (opc != null)
+            {
+                try { opc.CloseSession(); } catch { }
+                sessions.Remove(opc);
+            }
         }
 
         public void CloseAllSessions()
@@ -50,22 +77,41 @@ namespace GUI.Utils
     public class OPCUAHelper
     {
         private string PathXML;
-        private Session session;
+        private Opc.Ua.Client.Session session;
         private ApplicationInstance application;
         internal string UriToScan;
+        private CancellationToken tokenReconnect;
+        private double GRACE_TIME_MS = 30;
+        private Subscription _subscription;
+        public const int TIMEOUT_CONNECTION = 10;
 
         public string SessionName { get; private set; }
 
         public OPCUAHelper(string ApplicationName, string ConfigSectionName, string PathXML)
         {
             this.PathXML = PathXML;
-
             application = new ApplicationInstance();
             application.ApplicationName = ApplicationName;
             application.ConfigSectionName = ConfigSectionName;
             application.ApplicationType = ApplicationType.Client;
+            tokenReconnect = new CancellationToken();
             LoadXML();
 
+        }
+
+        public bool isConnected()
+        {
+            var span = DateTime.Now - session.LastKeepAliveTime.ToLocalTime();
+            if (span.TotalSeconds > TIMEOUT_CONNECTION)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public void Reconnect()
+        {
+            session.Reconnect();
         }
 
         public static NodeId ToNode(string node)
@@ -163,7 +209,7 @@ namespace GUI.Utils
                 identity = new UserIdentity(Username, Password);
             }
 
-            session = new Session(channel, configuration, endpoint, null);
+            session = new Opc.Ua.Client.Session(channel, configuration, endpoint, null);
             session.ReturnDiagnostics = DiagnosticsMasks.All;
             try
             {
@@ -262,14 +308,15 @@ namespace GUI.Utils
         {
             session.Read(
                 null,
-                0,
-                TimestampsToReturn.Both,
+                GRACE_TIME_MS,
+                TimestampsToReturn.Neither,
                 nodesToRead,
                 out DataValueCollection resultsValues,
                 out DiagnosticInfoCollection diagnosticInfos);
 
             return resultsValues;
         }
+
         #endregion
 
         #region Write single or multiple Tags
@@ -327,12 +374,33 @@ namespace GUI.Utils
 
         #region Subscribe to a distant tag
 
-        public void SubscribeToDataChanges(int PublishingInterval,
-            NodeId node,
-            Action<MonitoredItem,
-            MonitoredItemNotificationEventArgs> methodToCall)
+        public void RegisterSubscription(int ScanClass)
         {
             session.DeleteSubscriptionsOnClose = true;
+            _subscription = new Subscription(session.DefaultSubscription)
+            {
+                DisplayName = "Subscription" + ScanClass,
+                PublishingEnabled = true,
+                PublishingInterval = ScanClass / 2,
+                LifetimeCount = 100,
+                MinLifetimeInterval = 100
+
+            };
+
+            session.AddSubscription(_subscription);
+            _subscription.Create();
+        }
+
+        public void RemoveSubscription()
+        {
+            session.RemoveSubscription(_subscription);
+        }
+
+        public void SubscribeToDataChanges(int PublishingInterval,
+            List<NodeId> nodes,
+            Action<Opc.Ua.Client.MonitoredItem,
+            MonitoredItemNotificationEventArgs> methodToCall)
+        {
 
             // Event Delegate to launch the method
             MonitoredItemNotificationEventHandler eventHandler = null;
@@ -343,37 +411,20 @@ namespace GUI.Utils
 
             try
             {
-                Subscription subscription = new Subscription(session.DefaultSubscription)
+                foreach (var node in nodes)
                 {
-                    DisplayName = "Console ReferenceClient Subscription",
-                    PublishingEnabled = true,
-                    PublishingInterval = PublishingInterval,
-                    LifetimeCount = 0,
-                    MinLifetimeInterval = 100,
-                };
+                    Opc.Ua.Client.MonitoredItem intMonitoredItem = new Opc.Ua.Client.MonitoredItem(_subscription.DefaultItem);
+                    intMonitoredItem.StartNodeId = node;
+                    intMonitoredItem.AttributeId = Attributes.Value;
+                    intMonitoredItem.DisplayName = node.ToString();
+                    intMonitoredItem.SamplingInterval = PublishingInterval / 2;
+                    intMonitoredItem.QueueSize = 2;
+                    intMonitoredItem.DiscardOldest = false;
+                    intMonitoredItem.Notification += eventHandler;
+                    _subscription.AddItem(intMonitoredItem);
+                }
 
-                session.AddSubscription(subscription);
-
-                // Create the subscription on Server side
-                subscription.Create();
-                // Console.WriteLine("New Subscription created with SubscriptionId = {0}.", subscription.Id);
-
-                // Create MonitoredItems for data changes (Reference Server)
-                MonitoredItem intMonitoredItem = new MonitoredItem(subscription.DefaultItem);
-                intMonitoredItem.StartNodeId = node;
-                intMonitoredItem.AttributeId = Attributes.Value;
-                intMonitoredItem.DisplayName = "Variable";
-                intMonitoredItem.SamplingInterval = PublishingInterval;
-                intMonitoredItem.QueueSize = 100;
-                intMonitoredItem.DiscardOldest = false;
-                intMonitoredItem.Notification += eventHandler;
-                subscription.AddItem(intMonitoredItem);
-
-
-
-                // Create the monitored items on Server side
-                subscription.ApplyChanges();
-                // Console.WriteLine("MonitoredItems created for SubscriptionId = {0}.", subscription.Id);
+                _subscription.ApplyChanges();
             }
             catch (Exception ex)
             {
@@ -382,7 +433,7 @@ namespace GUI.Utils
         }
 
 
-        public static void OnMonitoredItemNotification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs e)
+        public static void OnMonitoredItemNotification(Opc.Ua.Client.MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs e)
         {
             try
             {
@@ -403,13 +454,12 @@ namespace GUI.Utils
             session.Close();
         }
 
-        public override bool Equals(object? obj)
+        public override bool Equals(object obj)
         {
             return obj is OPCUAHelper helper &&
                    UriToScan == helper.UriToScan;
         }
 
-
-
     }
 }
+

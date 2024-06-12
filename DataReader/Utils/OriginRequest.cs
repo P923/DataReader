@@ -36,7 +36,7 @@ namespace GUI.Utils
                     Username = parts[0];
                     Password = parts[1]; 
                 }
-                session = OPCSessions.AddOrCreateSession(tag.DataOrigin.Ip, Username, Password);
+                session = OPCSessions.AddOrCreateSession(tag.DataOrigin.Ip, false, Username, Password);
             }
         }
 
